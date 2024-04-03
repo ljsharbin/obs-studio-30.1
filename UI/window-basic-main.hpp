@@ -208,6 +208,8 @@ class OBSBasic : public OBSMainWindow {
 		DropType_Media,
 		DropType_Html,
 		DropType_Url,
+		DropType_VisTitleLayout,
+		DropType_VisTitleDynaTex,
 	};
 
 	enum ContextBarSize {

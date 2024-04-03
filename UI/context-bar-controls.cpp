@@ -13,6 +13,7 @@
 #include "ui_image-source-toolbar.h"
 #include "ui_color-source-toolbar.h"
 #include "ui_text-source-toolbar.h"
+#include "ui_vistitle-toolbar.h"
 
 #ifdef _WIN32
 #define get_os_module(win, mac, linux) obs_get_module(win)
@@ -745,4 +746,75 @@ void TextSourceToolbar::on_text_textChanged()
 	obs_source_update(source, nullptr);
 
 	SetUndoProperties(source, true);
+}
+
+#include "VtCustomCallbackForObs.h"
+
+VistitleToolbar::VistitleToolbar(QWidget *parent, OBSSource source)
+	: SourceToolbar(parent, source), ui(new Ui_VistitleToolbar)
+{
+	ui->setupUi(this);
+
+	void *pCustomData = obs_source_get_type_data(GetSource());
+	struct custom_callback_for_obs *pCustomCallback =
+		(struct custom_callback_for_obs *)pCustomData;
+
+	if (nullptr == pCustomCallback)
+		return;
+
+	// create callback button(s)
+	const int nNameLength = 100;
+	char btnName[nNameLength];
+	btnName[nNameLength - 1] = 0;
+	for (int i = 0; i < pCustomCallback->callback_count; i++) {
+		if (pCustomCallback->get_callback_label) {
+			const char *pName =
+				pCustomCallback->get_callback_label(i);
+			strcpy_s(btnName, nNameLength - 1, pName);
+		} else {
+			sprintf_s(btnName, nNameLength - 1, "Button%d", i);
+		}
+		
+		QPushButton *btn = new QPushButton(btnName, this);
+
+		if (pCustomCallback->get_callback_tip) {
+			const char *pTip = pCustomCallback->get_callback_tip(i);
+			btn->setToolTip(QString(pTip));
+		}
+
+		if (pCustomCallback->get_callback_icon_path) {
+			const char *pIconPath =
+				pCustomCallback->get_callback_icon_path(i);
+			if (pIconPath && os_file_exists(pIconPath))
+				btn->setIcon(QIcon(QString(pIconPath)));
+		}
+
+		m_vecBtn.push_back(btn);
+		layout()->addWidget(btn);
+		connect(btn, &QPushButton::clicked, this,
+			&VistitleToolbar::onButtonClicked);
+	}
+}
+
+VistitleToolbar::~VistitleToolbar() {}
+
+void VistitleToolbar::onButtonClicked() {
+	OBSSource source = GetSource();
+	if (!source) {
+		return;
+	}
+
+	QPushButton *senderButton =
+		qobject_cast<QPushButton *>(sender()); // 获取发送信号的按钮
+	int i = 0;
+	for (QPushButton* btn : m_vecBtn) {
+		if (btn == senderButton) {
+			//qDebug() << "Button " << i << " clicked !";
+			SaveOldProperties(source);
+			obs_source_custom_callback(GetSource(), i);
+			SetUndoProperties(source);
+			break;
+		}
+		i++;
+	}
 }

@@ -117,6 +117,63 @@ void OBSBasic::AddDropURL(const char *url, QString &name, obs_data_t *settings,
 	obs_data_set_string(settings, "url", QT_TO_UTF8(path.url()));
 }
 
+#include <iostream>
+
+static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+					"abcdefghijklmnopqrstuvwxyz"
+					"0123456789+/";
+
+std::string base64_encode(unsigned char const *bytes_to_encode,
+			  unsigned int in_len)
+{
+	std::string ret;
+	int i = 0;
+	int j = 0;
+	unsigned char char_array_3[3];
+	unsigned char char_array_4[4];
+
+	while (in_len--) {
+		char_array_3[i++] = *(bytes_to_encode++);
+		if (i == 3) {
+			char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+			char_array_4[1] = ((char_array_3[0] & 0x03) << 4) +
+					  ((char_array_3[1] & 0xf0) >> 4);
+			char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) +
+					  ((char_array_3[2] & 0xc0) >> 6);
+			char_array_4[3] = char_array_3[2] & 0x3f;
+
+			for (i = 0; (i < 4); i++)
+				ret += base64_chars[char_array_4[i]];
+			i = 0;
+		}
+	}
+
+	if (i) {
+		for (j = i; j < 3; j++)
+			char_array_3[j] = '\0';
+
+		char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+		char_array_4[1] = ((char_array_3[0] & 0x03) << 4) +
+				  ((char_array_3[1] & 0xf0) >> 4);
+		char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) +
+				  ((char_array_3[2] & 0xc0) >> 6);
+		char_array_4[3] = char_array_3[2] & 0x3f;
+
+		for (j = 0; (j < i + 1); j++)
+			ret += base64_chars[char_array_4[j]];
+
+		while ((i++ < 3))
+			ret += '=';
+	}
+
+	return ret;
+}
+
+static inline std::string base64_encode(const char *str, unsigned int len)
+{
+	return base64_encode((unsigned const char *)str, len);
+}
+
 void OBSBasic::AddDropSource(const char *data, DropType image)
 {
 	OBSBasic *main = reinterpret_cast<OBSBasic *>(App()->GetMainWindow());
@@ -170,6 +227,36 @@ void OBSBasic::AddDropSource(const char *data, DropType image)
 		AddDropURL(data, name, settings, ovi);
 		type = "browser_source";
 		break;
+	case DropType_VisTitleLayout: {
+		QString filePath(data);
+		QFile file(filePath);
+		if (file.open(QIODevice::ReadOnly)) {
+			QByteArray ba = file.readAll();
+			std::string strBase64 =
+				base64_encode(ba.data(), ba.size());
+			obs_data_set_string(settings, "_LayoutData_",
+					    strBase64.c_str());
+			file.close();
+			name = QUrl::fromLocalFile(filePath).fileName();
+			type = "Vistitle.Layout";
+		}
+		break;
+	}
+	case DropType_VisTitleDynaTex: {
+		QString filePath(data);
+		QFile file(filePath);
+		if (file.open(QIODevice::ReadOnly)) {
+			QByteArray ba = file.readAll();
+			std::string strBase64 =
+				base64_encode(ba.data(), ba.size());
+			obs_data_set_string(settings, "_DynaTexData_",
+					    strBase64.c_str());
+			file.close();
+			name = QUrl::fromLocalFile(QString(data)).fileName();
+			type = "Vistitle.DynamicTexture";
+		}
+		break;
+	}
 	}
 
 	type = obs_get_latest_input_type_id(type);
@@ -269,6 +356,9 @@ void OBSBasic::ConfirmDropUrl(const QString &url)
 	}
 }
 
+static const char *VisTitleLayoutExtensions[] = {"vtlayout", nullptr};
+static const char *VisTitleDynaTexExtensions[] = {"vxdmtex", nullptr};
+
 void OBSBasic::dropEvent(QDropEvent *event)
 {
 	const QMimeData *mimeData = event->mimeData();
@@ -329,6 +419,9 @@ void OBSBasic::dropEvent(QDropEvent *event)
 			CHECK_SUFFIX(htmlExtensions, DropType_Html);
 			CHECK_SUFFIX(imageExtensions, DropType_Image);
 			CHECK_SUFFIX(mediaExtensions, DropType_Media);
+			CHECK_SUFFIX(VisTitleLayoutExtensions, DropType_VisTitleLayout);
+			CHECK_SUFFIX(VisTitleDynaTexExtensions, DropType_VisTitleDynaTex);
+
 
 #undef CHECK_SUFFIX
 		}

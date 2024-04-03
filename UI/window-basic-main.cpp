@@ -3343,10 +3343,14 @@ void OBSBasic::RenameSources(OBSSource source, QString newName,
 
 void OBSBasic::ClearContextBar()
 {
-	QLayoutItem *la = ui->emptySpace->layout()->itemAt(0);
-	if (la) {
-		delete la->widget();
-		ui->emptySpace->layout()->removeItem(la);
+	// clear all context bar
+	int nCount = ui->emptySpace->layout()->count();
+	for (int i = nCount - 1; i >= 0; i--) {
+		QLayoutItem *la = ui->emptySpace->layout()->itemAt(i);
+		if (la) {
+			delete la->widget();
+			ui->emptySpace->layout()->removeItem(la);
+		}
 	}
 }
 
@@ -3450,6 +3454,15 @@ void OBSBasic::UpdateContextBar(bool force)
 		if (contextBarSize >= ContextBarSize_Reduced &&
 		    (updateNeeded || force)) {
 			ClearContextBar();
+
+			// add Layout or DynamicTexture first
+			if (strcmp(id, "Vistitle.Layout") == 0 ||
+			    strcmp(id, "Vistitle.DynamicTexture") == 0) {
+				VistitleToolbar *c = new VistitleToolbar(
+					ui->emptySpace, source);
+				ui->emptySpace->layout()->addWidget(c);
+			}
+
 			if (flags & OBS_SOURCE_CONTROLLABLE_MEDIA) {
 				if (!is_network_media_source(source, id)) {
 					MediaControls *mediaControls =

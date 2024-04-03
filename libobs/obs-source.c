@@ -6319,3 +6319,19 @@ void obs_source_restore_filters(obs_source_t *source, obs_data_array_t *array)
 
 	da_free(cur_filters);
 }
+
+#include "VtCustomCallbackForObs.h"
+void obs_source_custom_callback(obs_source_t* source, int idx) {
+	void *type_data = obs_source_get_type_data(source);
+	if (NULL == type_data)
+		return;
+
+	struct custom_callback_for_obs *custom_callback_info =
+		(struct custom_callback_for_obs *)type_data;
+
+	if (NULL == custom_callback_info ||
+	    NULL == custom_callback_info->custom_callback)
+		return;
+
+	custom_callback_info->custom_callback(source->context.data, idx);
+}

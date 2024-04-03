@@ -280,7 +280,9 @@ void MediaControls::RefreshControls()
 		show();
 	}
 
-	bool has_playlist = strcmp(id, "ffmpeg_source") != 0;
+	bool has_playlist = strcmp(id, "ffmpeg_source") != 0 &&
+			    strcmp(id, "Vistitle.Layout") != 0 &&
+			    strcmp(id, "Vistitle.DynamicTexture") != 0;
 	ui->previousButton->setVisible(has_playlist);
 	ui->nextButton->setVisible(has_playlist);
 

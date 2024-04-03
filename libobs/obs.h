@@ -2754,6 +2754,8 @@ EXPORT void obs_source_frame_copy(struct obs_source_frame *dst,
 /* Get source icon type */
 EXPORT enum obs_icon_type obs_source_get_icon_type(const char *id);
 
+EXPORT void obs_source_custom_callback(obs_source_t *source, int idx);
+
 #ifdef __cplusplus
 }
 #endif

@@ -89,7 +89,8 @@ target_sources(
           obs-view.c
           obs.c
           obs.h
-          obs.hpp)
+          obs.hpp
+          VtCustomCallbackForObs.h)
 
 target_sources(
   libobs

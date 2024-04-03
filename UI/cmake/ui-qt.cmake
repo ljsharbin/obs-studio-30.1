@@ -55,7 +55,8 @@ set(_qt_sources
     forms/source-toolbar/game-capture-toolbar.ui
     forms/source-toolbar/image-source-toolbar.ui
     forms/source-toolbar/media-controls.ui
-    forms/source-toolbar/text-source-toolbar.ui)
+    forms/source-toolbar/text-source-toolbar.ui
+    forms/source-toolbar/vistitle-toolbar.ui)
 
 target_sources(obs-studio PRIVATE ${_qt_sources})
 

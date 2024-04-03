@@ -10,6 +10,7 @@ class Ui_GameCaptureToolbar;
 class Ui_ImageSourceToolbar;
 class Ui_ColorSourceToolbar;
 class Ui_TextSourceToolbar;
+class Ui_VistitleToolbar;
 
 class SourceToolbar : public QWidget {
 	Q_OBJECT
@@ -176,4 +177,24 @@ public slots:
 	void on_selectFont_clicked();
 	void on_selectColor_clicked();
 	void on_text_textChanged();
+};
+
+#include <vector>
+class VistitleToolbar : public SourceToolbar {
+	Q_OBJECT
+
+	std::unique_ptr<Ui_VistitleToolbar> ui;
+
+public:
+	VistitleToolbar(QWidget *parent, OBSSource source);
+	~VistitleToolbar();
+
+//public slots:
+//	void on_tmpl_clicked();
+
+private slots:
+	void onButtonClicked();
+
+private:
+	std::vector<QPushButton *> m_vecBtn;
 };
